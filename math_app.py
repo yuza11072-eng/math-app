@@ -91,7 +91,7 @@ if remain <= 0:
         st.session_state.question_no += 1
         st.session_state.q, st.session_state.ans = make_question(grade)
         st.session_state.start_time = time.time()
-        st.experimental_rerun()
+        st.rerun()
 
 # =====================
 # 問題表示
@@ -119,4 +119,5 @@ if st.session_state.answered:
         st.session_state.q, st.session_state.ans = make_question(grade)
         st.session_state.start_time = time.time()
         st.session_state.answered = False
-        st.experimental_rerun()
+        st.rerun()
+

@@ -1,6 +1,7 @@
 import streamlit as st
 import random
 import time
+from datetime import datetime, timezone, timedelta
 
 # =====================
 # ページ設定
@@ -21,8 +22,7 @@ div.stButton > button {
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("## 📘 数学トレーニング")
-st.markdown("---")
+st.title("📘 数学トレーニング")
 
 # =====================
 # 学年選択
@@ -37,87 +37,103 @@ grade = st.selectbox(
 # =====================
 def make_question(grade):
     if grade == "中学1年":
-        a = random.randint(-10, 10)
+        x = random.randint(1, 10)
+        a = random.randint(2, 5)
         b = random.randint(1, 10)
-        return f"{a} + {b} = ?", a + b
+        c = a * x + b
+        return f"{a}x + {b} = {c} のとき x = ?", x
 
     if grade == "中学2年":
         x = random.randint(1, 10)
-        y = random.randint(1, 10)
-        return f"x + y = {x+y}, x = {x} のとき y = ?", y
+        a = random.randint(2, 8)
+        return f"{a}x = {a*x} のとき x = ?", x
 
     if grade == "中学3年":
-        a = random.randint(1, 9)
-        return f"x² = {a*a} のとき x = ?", a
+        x = random.choice([-3, -2, -1, 1, 2, 3])
+        b = -2 * x
+        c = x * x
+        return f"x² {b:+}x + {c} = 0 のとき x = ?（小さい方）", x
 
 # =====================
 # セッション初期化
 # =====================
-if "question_no" not in st.session_state:
-    st.session_state.question_no = 1
+if "q_no" not in st.session_state:
+    st.session_state.q_no = 1
     st.session_state.score = 0
-    st.session_state.q, st.session_state.ans = make_question(grade)
+    st.session_state.question, st.session_state.answer = make_question(grade)
     st.session_state.start_time = time.time()
     st.session_state.answered = False
 
 # =====================
-# 終了判定（15問）
+# 定数
 # =====================
 TOTAL = 15
 LIMIT = 300  # 5分
 
-if st.session_state.question_no > TOTAL:
+# =====================
+# 終了
+# =====================
+if st.session_state.q_no > TOTAL:
     st.success("🎉 終了！")
     st.markdown(f"## 🏆 正解数：{st.session_state.score} / {TOTAL}")
+    if st.button("🔁 もう一回"):
+        for k in list(st.session_state.keys()):
+            del st.session_state[k]
+        st.rerun()
     st.stop()
 
 # =====================
-# タイマー（1問ごと）
+# タイマー（自動更新）
 # =====================
 elapsed = int(time.time() - st.session_state.start_time)
 remain = LIMIT - elapsed
 
-st.markdown(f"### ❓ 第 {st.session_state.question_no} 問 / {TOTAL}")
-st.markdown(f"⏱ 残り時間：**{remain//60}分 {remain%60}秒**")
-st.markdown(f"🏆 正解数：**{st.session_state.score}**")
-st.markdown("---")
+timer_box = st.empty()
+timer_box.markdown(
+    f"### ⏱ 残り時間：{remain//60}分 {remain%60}秒"
+)
 
-# =====================
-# 時間切れ
-# =====================
 if remain <= 0:
     st.error("⏰ 時間切れ！")
     if st.button("➡ 次の問題へ"):
-        st.session_state.question_no += 1
-        st.session_state.q, st.session_state.ans = make_question(grade)
+        st.session_state.q_no += 1
+        st.session_state.question, st.session_state.answer = make_question(grade)
         st.session_state.start_time = time.time()
+        st.session_state.answered = False
         st.rerun()
 
 # =====================
 # 問題表示
 # =====================
-st.markdown(f"### {st.session_state.q}")
+st.markdown(f"### ❓ 第 {st.session_state.q_no} 問 / {TOTAL}")
+st.markdown(st.session_state.question)
+
 user = st.number_input("答えを入力", step=1)
 
 # =====================
 # 判定
 # =====================
 if st.button("答え合わせ"):
-    if user == st.session_state.ans:
+    if user == st.session_state.answer:
         st.success("⭕ 正解！")
         st.session_state.score += 1
     else:
-        st.error(f"❌ 不正解… 正解は {st.session_state.ans}")
+        st.error(f"❌ 不正解… 正解は {st.session_state.answer}")
     st.session_state.answered = True
 
 # =====================
-# 次の問題
+# 次へ
 # =====================
 if st.session_state.answered:
     if st.button("➡ 次の問題"):
-        st.session_state.question_no += 1
-        st.session_state.q, st.session_state.ans = make_question(grade)
+        st.session_state.q_no += 1
+        st.session_state.question, st.session_state.answer = make_question(grade)
         st.session_state.start_time = time.time()
         st.session_state.answered = False
         st.rerun()
 
+# =====================
+# 自動リフレッシュ（1秒）
+# =====================
+time.sleep(1)
+st.rerun()

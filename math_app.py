@@ -1,6 +1,7 @@
 import streamlit as st
 import random
 import time
+from streamlit_autorefresh import st_autorefresh
 
 # =====================
 # ページ設定
@@ -14,9 +15,9 @@ st.set_page_config(
 st.title("📘 数学トレーニング")
 
 # =====================
-# 1秒ごと自動更新
+# 1秒ごと自動更新（正しい方法）
 # =====================
-st.autorefresh(interval=1000, key="timer")
+st_autorefresh(interval=1000, key="timer")
 
 # =====================
 # 問題生成
@@ -35,7 +36,7 @@ def make_question(grade):
         return f"{a}x = {a*x} のとき x = ?", x
 
     if grade == "中学3年":
-        # 25%で ax^2 = k 型
+        # ax^2 = k 型
         if random.random() < 0.25:
             x = random.choice([1, 2, 3, -1, -2])
             a = random.randint(1, 3)
@@ -53,7 +54,7 @@ def make_question(grade):
 # セッション初期化
 # =====================
 if "page" not in st.session_state:
-    st.session_state.page = "select"  # select / quiz
+    st.session_state.page = "select"
 
 # =====================
 # 学年選択画面
@@ -117,7 +118,6 @@ if st.session_state.page == "quiz":
     st.markdown(st.session_state.question)
     user_answer = st.number_input("答えを入力", step=1)
 
-    # 判定
     if st.button("答え合わせ"):
         if user_answer == st.session_state.answer:
             st.success("⭕ 正解！")
@@ -126,7 +126,6 @@ if st.session_state.page == "quiz":
             st.error(f"❌ 不正解… 正解は {st.session_state.answer}")
         st.session_state.answered = True
 
-    # 次へ
     if st.session_state.answered:
         if st.button("➡ 次の問題"):
             st.session_state.q_no += 1
